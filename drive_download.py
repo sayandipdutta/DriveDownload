@@ -81,6 +81,7 @@ class FilmDB:
         if director:
             films = self._db.query(
                                     'Director == @director'
+                            ).sort_values(by='Year'
                             ).filter(like='Movie Name'
                             ).values.flatten().tolist()
 
@@ -163,11 +164,11 @@ def download_info(status, start_time: float) -> str:
     curr_time = time.time()
     speed = (total - remaining) / (curr_time - start_time)
     ETA = sec_to_hms(remaining / speed)
-    print_string = ' '.join(
+    print_string = ' '.join((
         f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB",
         f"Remaining: {remaining: .2f} MB",
         f"ETA: {ETA}, speed: {speed: .3f} MBps\t\t"
-    )
+    ))
     return print_string
 
 @measure_time
