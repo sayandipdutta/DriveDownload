@@ -68,11 +68,20 @@ def download_info(status, start_time: float) -> str:
     total = bytes_to_MB(status.total_size)
     remaining = total * (1 - status.progress())
     curr_time = time.time()
-    speed = (total - remaining) / (curr_time - start_time)
-    ETA = sec_to_hms(remaining / speed)
+
+    MB_speed = speed = (total - remaining) / (curr_time - start_time)
+    unit = 'MBps'
+    if speed < 1:
+        speed *= 1024
+        unit = 'KBps'
+    if unit == 'KBps' and speed < 1:
+        speed *= 1024
+        unit = 'Bps'
+
+    ETA = sec_to_hms(remaining / MB_speed)
     print_string = ' '.join((
         f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB",
         f"Remaining: {remaining: .2f} MB",
-        f"ETA: {ETA}, speed: {speed: .3f} MBps    "
+        f"ETA: {ETA}, speed: {speed: .3f} {unit}                        "
     ))
     return print_string
