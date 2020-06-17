@@ -201,7 +201,9 @@ def main():
 
         for fl in files:
             if not 'folder' in fl['mimeType']:
-                if 'success.txt' in os.listdir(save_path): continue
+                if 'success.txt' in os.listdir(save_path):
+                    print("File already present.")
+                    continue
                 print(f'Downloading {fl["name"]}')
                 success = download_file(fl['id'], fl['name'])
 
