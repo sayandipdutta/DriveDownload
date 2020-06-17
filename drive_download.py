@@ -97,23 +97,6 @@ class FilmDB:
         
 
 @measure_time
-def get_by_director(name: str) -> list:
-    """
-    Callable to get list of films available by a director.
-
-    ------------------------------------------------------
-    args     -> name  => str
-
-    returns  -> films => list
-
-    ------------------------------------------------------
-    """
-    films = df.query(
-                    'Director == @name'
-                ).filter(like='Movie Name').tolist()
-    return films
-
-@measure_time
 def get_folder_content(folder_name: str = None, 
                         folder_id: str = None) -> list:
     '''
