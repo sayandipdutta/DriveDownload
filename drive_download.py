@@ -241,7 +241,7 @@ def download_file(file_id: str, file_name: str) -> bool:
 
     request = DRIVE.files().get_media(fileId=file_id)
     fh = FileIO(file_name, 'wb')
-    downloader = MediaIoBaseDownload(fh, request)
+    downloader = MediaIoBaseDownload(fh, request, chunksize=10 * 1024 * 1024)
     complete = False
     start_time = time.time()
 
