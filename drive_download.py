@@ -29,6 +29,7 @@ from googleapiclient.http import MediaIoBaseDownload
 from io import FileIO
 from httplib2 import Http
 from oauth2client import file, client, tools
+from typing import Callable
 
 
 
@@ -93,12 +94,12 @@ class FilmDB:
         return f"<FilmDB object of file {self._str}>"
         
 
-def measure_time(func: Function) -> Function:
+def measure_time(func: Callable) -> Callable:
     """
-    Measure time taken by the Function.
+    Measure time taken by the Callable.
     -----------------------------------------------------
-    args    -> func   => Function
-    returns -> caller => Function
+    args    -> func   => Callable
+    returns -> caller => Callable
     -----------------------------------------------------
     Decorator to measure time.
     """
@@ -163,7 +164,7 @@ def download_info(status, start_time: float) -> str:
 @measure_time
 def get_by_director(name: str) -> list:
     """
-    Function to get list of films available by a director.
+    Callable to get list of films available by a director.
 
     ------------------------------------------------------
     args     -> name  => str
@@ -180,7 +181,7 @@ def get_by_director(name: str) -> list:
 def get_folder_content(folder_name: str = None, 
                         folder_id: str = None) -> list:
     '''
-    Function to get contents of a folder
+    Callable to get contents of a folder
     ------------------------------------------------------
     args     -> folder_name => str / None
              -> folder_id   => str / None
