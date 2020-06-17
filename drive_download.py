@@ -65,10 +65,11 @@ class FilmDB:
         """ 
         Get films by director.
         -----------------------------------------------
-        args    -> by    => str (default: 'director')
+        args    -> by    => str (default: 'director'),
                 -> name  => str (name of the director)
 
         returns -> films => list
+
         -----------------------------------------------
         provided by=='director' and name==<some_name>,
         return list of films by that director from the db.
@@ -99,7 +100,9 @@ def measure_time(func: Callable) -> Callable:
     Measure time taken by the Callable.
     -----------------------------------------------------
     args    -> func   => Callable
+
     returns -> caller => Callable
+
     -----------------------------------------------------
     Decorator to measure time.
     """
@@ -119,7 +122,9 @@ def bytes_to_MB(bytes: int) -> float:
     converts bytes to MegaBytes
     ---------------------------
     args   -> bytes => int
+
     return -> MBytes=> float
+
     ---------------------------
     """
 
@@ -130,7 +135,9 @@ def sec_to_hms(sec: float) -> str:
     converts seconds to human readable hh:mm:ss format
     --------------------------------------------------
     args    -> sec              => float
+
     returns -> formatted_time   => str
+
     --------------------------------------------------
     """
 
@@ -141,9 +148,11 @@ def download_info(status, start_time: float) -> str:
     Given status object and a start_time returns current 
     status of the download.
     ---------------------------------------------------
-    args    -> status       => status object from MediaIOBasedDownload
+    args    -> status       => status object from MediaIOBasedDownload,
             -> start_time   => float
+
     returns -> print_string => str
+
     ---------------------------------------------------
     From status object calculates and returns 
     total_size, total_downloaded, remaining_download, ETA, speed
@@ -168,6 +177,7 @@ def get_by_director(name: str) -> list:
 
     ------------------------------------------------------
     args     -> name  => str
+
     returns  -> films => list
 
     ------------------------------------------------------
@@ -183,10 +193,11 @@ def get_folder_content(folder_name: str = None,
     '''
     Callable to get contents of a folder
     ------------------------------------------------------
-    args     -> folder_name => str / None
+    args     -> folder_name => str / None,
              -> folder_id   => str / None
 
     returns  -> files       => list
+
     ------------------------------------------------------
     Given a folder name generates id, and recursively calls 
     itself with id, and then generates list of files/folders
@@ -218,10 +229,11 @@ def download_file(file_id: str, file_name: str) -> bool:
     '''
     Download files given file_id and save it in filename
     ------------------------------------------------------
-    args      -> file_id   => str
+    args      -> file_id   => str,
               -> file_name => str
     
     returns   -> success   => bool
+
     ------------------------------------------------------
     complete==True if file download successful else False
     '''
