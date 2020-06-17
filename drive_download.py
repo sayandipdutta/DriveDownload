@@ -167,7 +167,7 @@ def download_info(status, start_time: float) -> str:
     print_string = ' '.join((
         f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB",
         f"Remaining: {remaining: .2f} MB",
-        f"ETA: {ETA}, speed: {speed: .3f} MBps\t\t"
+        f"ETA: {ETA}, speed: {speed: .3f} MBps    "
     ))
     return print_string
 
