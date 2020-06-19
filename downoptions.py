@@ -68,7 +68,7 @@ class BaseDownloader:
         pass
 
     @staticmethod
-    def get_file_id(file_name: str) -> str:
+    def get_file_id(file_name: str, parent=None) -> str:
         """
         Add docstrings
         """
@@ -85,7 +85,17 @@ class BaseDownloader:
         if not files:
             raise FileNotFoundError(2, "No such file or directory", file_name)
         elif len(files) > 1:
-            raise Exception("More than one value found", files)
+            if not parent:
+                raise ValueError("More than one value found", files)
+            else:
+                query += f' and "{parent}" in parents'
+                files = DRIVE.files().list(q=query, 
+                                            corpora='user'
+                                            ).execute().get('files', [])
+                if len(files) > 1:
+                    raise ValueError("More than one value found", files)
+                else:
+                    return files[0]['id']
         else:
             return files[0]['id']
 
@@ -158,15 +168,20 @@ class BaseDownloader:
 class FileDownload(BaseDownloader):
     def __init__(self, files, target, indivdual_folders=False):
         super().__init__()
-        self.files = files
+
+        if type(files) == tuple:
+            self.files, self.parent = files
+        else:
+            self.files, self.parent = files, None
         self.tot_files = len(files)
         self.target = target
         self.indivdual_folders = indivdual_folders
+        self.file_type = type(files[0])
 
     def download(self):
         if not os.path.isdir(self.target):os.mkdir(self.target)
         for count, file in enumerate(self.files, start=1):
-            file_id = self.get_file_id(file)
+            file_id = self.get_file_id(file, self.parent)
             filename = os.path.join(self.target, file)
 
             if self.indivdual_folders:
@@ -200,19 +215,21 @@ class FolderDownload(BaseDownloader):
 
     #TODO: implement recursion
     def download(self):
+        folderid = None
         if self.nested:
             folder_contents = self.get_folder_content(folder_name=self.folders[0])
+            folderid = self.get_file_id(self.folders[0])
             self.folders = [folder['name'] for folder in folder_contents]
         for count, folder in enumerate(self.folders, start=1):
             try:
-                folder_id = self.get_file_id(folder)
+                folder_id = self.get_file_id(folder, folderid)
 
             except (HttpError, ValueError, FileNotFoundError, Exception) as e:
                 print(e)
                 continue
             folder_name = os.path.join(self.target, folder)
             folder_contents = self.get_folder_content(folder, folder_id)
-            fl_downloader = FileDownload([file['name'] for file in folder_contents], folder_name, False)
+            fl_downloader = FileDownload(([file['name'] for file in folder_contents], folder_id), folder_name, False)
 
             print(f"Downloading {count}/{self.tot_folders}\nSaving {folder} in {self.target} progress:")
             fl_downloader.download()
