@@ -1,7 +1,8 @@
-import global_config
+# import global_config
 from downoptions import *
 
-for instr in global_config.instruction_set:
+for instr in instruction_set:
+    # breakpoint()
     if instr.special:
         downloader = globals()[instr.method](instr.args, instr.target, instr.special)
     else:

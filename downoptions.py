@@ -1,7 +1,8 @@
-import global_config
+from global_config import *
+from googleapiclient.errors import HttpError
 from pathlib import Path
-
-@measure_time
+import pandas as pd
+from utils import *
 
 
 class FilmDB:
@@ -14,10 +15,11 @@ class FilmDB:
     }
 
     def __init__(self, filename: str):
-        self._filename = filename
+        self._filename = os.path.join(BASE_TARGET, filename)
         self._db = pd.read_csv(self._filename)
         self._file_without_path = self._filename.rsplit('/')[-1]
 
+    @measure_time
     def get_films(self, by: str = 'director', **kwargs):
         """ 
         Get films by director.
@@ -36,13 +38,14 @@ class FilmDB:
 
         director = kwargs.get('name', None)
         if director:
-            films = self._db.query(
-                                    'Director == @director'
-                            ).sort_values(by='Year'
+            self._db = self._db[self._db['Director'].notna()]
+            films = self._db[self._db['Director'
+                            ].str.contains(director
+                            )].sort_values(by='Year'
                             ).filter(like='Movie Name'
                             ).values.flatten().tolist()
 
-            return films, kwargs['name']
+            return films
         else:
             raise NotImplementedError
 
@@ -71,14 +74,16 @@ class BaseDownloader:
         """
 
         query = ["mimeType != 'application/vnd.google-apps.folder'",
-                 f"name = {file_name}"]
+                 f"name = '{file_name}'"]
         query = ' and '.join(query)
+        query = f"name = '{file_name}'"
+        
         files = DRIVE.files().list(q=query, 
-                                corpora='user'
-                                ).execute().get('files', [])
+                                    corpora='user'
+                                    ).execute().get('files', [])
 
         if not files:
-            raise FileNotFoundError("File does not exist, please check name")
+            raise FileNotFoundError(2, "No such file or directory", file_name)
         elif len(files) > 1:
             raise Exception("More than one value found", files)
         else:
@@ -90,7 +95,7 @@ class BaseDownloader:
         Download files given file_id and save it in filename
         ------------------------------------------------------
         args      -> file_id   => str,
-                -> file_name => str
+                  -> file_name => str
         
         returns   -> success   => bool
 
@@ -152,43 +157,81 @@ class BaseDownloader:
 
 class FileDownload(BaseDownloader):
     def __init__(self, files, target, indivdual_folders=False):
-        super().__init__(self)
+        super().__init__()
         self.files = files
         self.tot_files = len(files)
         self.target = target
         self.indivdual_folders = indivdual_folders
 
     def download(self):
+        if not os.path.isdir(self.target):os.mkdir(self.target)
         for count, file in enumerate(self.files, start=1):
             file_id = self.get_file_id(file)
             filename = os.path.join(self.target, file)
+            
             if self.indivdual_folders:
-                fullpath = Path(fileame).with_suffix('')
+                fullpath = Path(filename).with_suffix('')
+
                 if not os.path.isdir(fullpath):
                     os.mkdir(fullpath)
                     filename = os.path.join(fullpath, file)
-            print(f"Downloading {count}/{self.tot_files}\nSaving {file} in {target} progress:")
-            self.download_file(file_id, filename)
+            else:
+                fullpath = self.target
+            
+            if 'success.txt' in os.listdir(fullpath) and \
+                file in open(os.path.join(fullpath, 'success.txt')).read():
+                print(f"{file} already present")
+                continue
+            print(f"Downloading {count}/{self.tot_files}\nSaving {file} in {fullpath} progress:")
+            complete = self.download_file(file_id, filename)
+            if complete:
+                with open(os.path.join(fullpath, 'success.txt'), 'a+') as f:
+                    f.write(file + '\n')
+
             print("File saved.")
 
 class FolderDownload(BaseDownloader):
-    def __init__(self, files, target):
-        super().__init__(self)
+    def __init__(self, folders, target):
+        super().__init__()
         self.folders = folders
         self.tot_folders = len(folders)
         self.target = target
 
     def download(self):
-
         for count, folder in enumerate(self.folders, start=1):
-            folder_id = self.get_file_id(folder)
+            try:
+                folder_id = self.get_file_id(folder)
+
+            except (HttpError, ValueError, FileNotFoundError, Exception) as e:
+                print(e)
+                continue
             folder_name = os.path.join(self.target, folder)
             folder_contents = self.get_folder_content(folder, folder_id)
-            fl_downloader = FileDownload(folder_contents, folder_name, target)
+            fl_downloader = FileDownload([file['name'] for file in folder_contents], folder_name, False)
 
-            print(f"Downloading {count}/{self.tot_files}\nSaving {file} in {target} progress:")
-            self.download_file(file_id, filename)
+            print(f"Downloading {count}/{self.tot_folders}\nSaving {folder} in {self.target} progress:")
+            fl_downloader.download()
             print("File saved.")
+
+class Custom(BaseDownloader):
+    def __init__(self, search_terms, target, query_type):
+        super().__init__()
+        self.target = target
+        self.search = search_terms
+        self.query_type = query_type
+        self.filmdb = FilmDB(DATABASE)
+
+    def download(self):
+        if self.query_type.capitalize() == 'Director':
+            for query in self.search:
+                folders = self.filmdb.get_films(by='director', name=query)
+                self.target = os.path.join(self.target, query)
+                if not os.path.isdir(self.target):os.mkdir(self.target)
+                print(f"Downloading films of {query}")
+                fl_downloader = FolderDownload(folders, self.target)
+                fl_downloader.download()
+
+
 
     
 
