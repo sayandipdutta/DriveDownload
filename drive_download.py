@@ -79,9 +79,10 @@ class FilmDB:
 
         director = kwargs.get('name', None)
         if director:
-            films = self._db.query(
-                                    'Director == @director'
-                            ).sort_values(by='Year'
+            self._db = self._db[self._db['Director'].notna()]
+            films = self._db[self._db['Director'
+                            ].str.contains(director)
+                            ].sort_values(by='Year'
                             ).filter(like='Movie Name'
                             ).values.flatten().tolist()
 
@@ -165,7 +166,7 @@ def main():
 
     fdb = FilmDB(DATABASE)
     film_list, director_name = fdb.get_films(by='director', 
-                                             name='Abbas Kiarostami')
+                                             name='Agnes Varda')
     curr_home = os.path.join(HOME, director_name)
     if not os.path.isdir(curr_home): os.mkdir(curr_home)
 
@@ -185,15 +186,14 @@ def main():
         for fl in files:
             if not 'folder' in fl['mimeType']:
                 if 'success.txt' in os.listdir(save_path):
-                    print("File already present.")
-                    continue
+                    if fl['name'] in open('success.txt').read():
+                        print(f"{fl['name']} already present.")
+                        continue
                 print(f'Downloading {fl["name"]}')
                 success = download_file(fl['id'], fl['name'])
-
                 if success:
-                    with open('success.txt', 'w') as log:
-                        log.write('success\n')
-                    continue
+                    with open('success.txt', 'a+') as log:
+                        log.write(f'{fl["name"]}\n')
                 else:
                     raise ValueError("Download interrupted.")
 
