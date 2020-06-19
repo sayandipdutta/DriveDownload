@@ -151,7 +151,7 @@ class BaseDownloader:
             if not folders:
                 raise ValueError("Empty Folder")
             folder_id = folders[0]['id']
-            return self.get_folder_content(folder_name=None, folder_id=folder_id)
+            return BaseDownloader.get_folder_content(folder_name=None, folder_id=folder_id)
 
     
 
@@ -168,7 +168,7 @@ class FileDownload(BaseDownloader):
         for count, file in enumerate(self.files, start=1):
             file_id = self.get_file_id(file)
             filename = os.path.join(self.target, file)
-            
+
             if self.indivdual_folders:
                 fullpath = Path(filename).with_suffix('')
 
@@ -191,13 +191,18 @@ class FileDownload(BaseDownloader):
             print("File saved.")
 
 class FolderDownload(BaseDownloader):
-    def __init__(self, folders, target):
+    def __init__(self, folders, target, nested=False):
         super().__init__()
         self.folders = folders
         self.tot_folders = len(folders)
         self.target = target
+        self.nested = nested
 
+    #TODO: implement recursion
     def download(self):
+        if self.nested:
+            folder_contents = self.get_folder_content(folder_name=self.folders[0])
+            self.folders = [folder['name'] for folder in folder_contents]
         for count, folder in enumerate(self.folders, start=1):
             try:
                 folder_id = self.get_file_id(folder)

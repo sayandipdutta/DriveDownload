@@ -26,7 +26,7 @@ def __instructions(class_type, args, target, special):
         raise FileNotFoundError(2, 'No such file or directory', target)
     
     args = args.split('^')
-    if class_type == 'FileDownload':
+    if class_type != 'Custom':
         special = literal_eval(special)
 
     return instruction(class_type, args, target, special)
