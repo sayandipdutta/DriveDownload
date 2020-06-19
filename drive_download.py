@@ -97,6 +97,27 @@ class FilmDB:
         return f"<FilmDB object of file {self._str}>"
         
 
+def get_file_id(file_name: str) -> str:
+    """
+    Add docstrings
+    """
+
+
+    query = ["mimeType != 'application/vnd.google-apps.folder'",
+         f"name = {file_name}"]
+    query = ' and '.join(query)
+    files = DRIVE.files().list(q=query, 
+                               corpora='user'
+                               ).execute().get('files', [])
+
+    if not files:
+        raise FileNotFoundError("File does not exist, please check name")
+    elif len(files) > 1:
+        raise Exception("More than one value found", files)
+    else:
+        return files[0]['id']
+
+
 @measure_time
 def get_folder_content(folder_name: str = None, 
                         folder_id: str = None) -> list:
@@ -160,29 +181,26 @@ def download_file(file_id: str, file_name: str) -> bool:
     print()
     return complete
 
+
+def oversee_download(dir_name, fl):
+    if 'success.txt' in os.listdir(dir_name):
+        print("File already present.")
+        return
+
+    print(f'Downloading {fl["name"]}')
+    success = download_file(fl['id'], fl['name'])
+    if success:
+        with open('success.txt', 'w') as log:
+            log.write('success\n')
+    return success
+
 @measure_time
-def main():
+def main(type_):
     """Driver program."""
 
-    fdb = FilmDB(DATABASE)
-    film_list, director_name = fdb.get_films(by='director', 
-                                             name='Agnes Varda')
-    curr_home = os.path.join(HOME, director_name)
-    if not os.path.isdir(curr_home): os.mkdir(curr_home)
-
-    for folder in film_list:
-
-        save_path = os.path.join(curr_home, folder)
-        if not os.path.isdir(save_path): os.mkdir(save_path)
-        os.chdir(save_path)
-
-        try:
-            files = get_folder_content(folder_name=folder)
-        except Exception as e:
-            print(e)
-            continue
-        print(f"Folder: {folder}")
-
+    if type_ == 'file':
+        files, dir_name = config.get_args()
+        if not os.path.isdir(dir_name): os.mkdir(dir_name); os.chdir(dir_name)
         for fl in files:
             if not 'folder' in fl['mimeType']:
                 if 'success.txt' in os.listdir(save_path):
@@ -196,7 +214,32 @@ def main():
                         log.write(f'{fl["name"]}\n')
                 else:
                     raise ValueError("Download interrupted.")
+            oversee_download(dir_name, fl)
+
+    elif type_ == 'folder':
+        fdb = FilmDB(DATABASE)
+        film_list, director_name = fdb.get_films(by='director', 
+                                                name='Abbas Kiarostami')
+        curr_home = os.path.join(HOME, director_name)
+        if not os.path.isdir(curr_home): os.mkdir(curr_home)
+
+        for folder in film_list:
+
+            save_path = os.path.join(curr_home, folder)
+            if not os.path.isdir(save_path): os.mkdir(save_path)
+            os.chdir(save_path)
+
+            try:
+                files = get_folder_content(folder_name=folder)
+            except Exception as e:
+                print(e)
+                continue
+            print(f"Folder: {folder}")
+
+            for fl in files:
+                if not 'folder' in fl['mimeType']:
+                    oversee_download(save_path, fl)
 
 
 if __name__ == '__main__':
-    main()
+    main('folder')
