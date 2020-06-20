@@ -220,7 +220,7 @@ class FolderDownload(BaseDownloader):
             folder_contents = self.get_folder_content(folder_name=self.folders[0])
             folderid = self.get_file_id(self.folders[0])
             self.folders = [folder['name'] for folder in folder_contents]
-        self.tot_folders = len(folder)
+        self.tot_folders = len(self.folders)
         for count, folder in enumerate(self.folders, start=1):
             try:
                 folder_id = self.get_file_id(folder, folderid)
