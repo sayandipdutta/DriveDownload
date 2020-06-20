@@ -115,7 +115,7 @@ class BaseDownloader:
 
         request = DRIVE.files().get_media(fileId=file_id)
         fh = FileIO(file_name, 'wb')
-        downloader = MediaIoBaseDownload(fh, request, chunksize=10 * 1024 * 1024)
+        downloader = MediaIoBaseDownload(fh, request, chunksize=150 * 1024 * 1024)
         complete = False
         start_time = time.time()
 
@@ -220,6 +220,7 @@ class FolderDownload(BaseDownloader):
             folder_contents = self.get_folder_content(folder_name=self.folders[0])
             folderid = self.get_file_id(self.folders[0])
             self.folders = [folder['name'] for folder in folder_contents]
+        self.tot_folders = len(folder)
         for count, folder in enumerate(self.folders, start=1):
             try:
                 folder_id = self.get_file_id(folder, folderid)
