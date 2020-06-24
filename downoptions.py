@@ -180,6 +180,7 @@ class FileDownload(BaseDownloader):
 
     def download(self):
         if not os.path.isdir(self.target):os.mkdir(self.target)
+        self.tot_files = len(self.files)
         for count, file in enumerate(self.files, start=1):
             file_id = self.get_file_id(file, self.parent)
             filename = os.path.join(self.target, file)
