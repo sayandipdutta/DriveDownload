@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 from utils import *
 
+# __all__ = ['FilmDB', 'FileDownload', 'FolderDownload', 'Custom']
 
 class FilmDB:
     """
@@ -86,6 +87,7 @@ class BaseDownloader:
             raise FileNotFoundError(2, "No such file or directory", file_name)
         elif len(files) > 1:
             if not parent:
+                return files[0]['id']
                 raise ValueError("More than one value found", files)
             else:
                 query += f' and "{parent}" in parents'
@@ -152,7 +154,7 @@ class BaseDownloader:
                 raise ValueError("Empty folder")
             return files
         else:
-            query = f"name = '{folder_name}' and mimeType contains 'folder'"
+            query = f"name contains '{folder_name}' and mimeType contains 'folder'"
             folders = DRIVE.files().list(
                                             q=query, 
                                             corpora='user'

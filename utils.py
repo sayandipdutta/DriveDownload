@@ -2,6 +2,9 @@ import datetime, time
 from typing import Callable
 from functools import wraps
 
+# __all__ = ['measure_time', 'bytes_to_MB', 'sec_to_hms', 'download_info']
+
+
 def measure_time(func: Callable) -> Callable:
     """
     Measure time taken by the Callable.

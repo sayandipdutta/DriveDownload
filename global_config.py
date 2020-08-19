@@ -12,6 +12,8 @@ from collections import namedtuple
 
 CONFIG = sys.argv[1]
 
+# __all__ = ['instruction_set', 'DATABASE']
+
 instruction_set = []
 
 def __instructions(class_type, args, target, special):
