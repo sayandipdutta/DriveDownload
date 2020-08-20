@@ -77,8 +77,8 @@ class BaseDownloader:
         query = ["mimeType != 'application/vnd.google-apps.folder'",
                  f"name = '{file_name}'"]
         query = ' and '.join(query)
+        file_name = file_name.replace("'", "\\'")
         query = f"name = '{file_name}'"
-        
         files = DRIVE.files().list(q=query, 
                                     corpora='user'
                                     ).execute().get('files', [])
@@ -135,7 +135,7 @@ class BaseDownloader:
         Callable to get contents of a folder
         ------------------------------------------------------
         args     -> folder_name => str / None,
-                -> folder_id   => str / None
+                 -> folder_id   => str / None
 
         returns  -> files       => list
 
@@ -154,7 +154,9 @@ class BaseDownloader:
                 raise ValueError("Empty folder")
             return files
         else:
+            folder_name = folder_name.replace("'", "\\'")
             query = f"name contains '{folder_name}' and mimeType contains 'folder'"
+            print(query)
             folders = DRIVE.files().list(
                                             q=query, 
                                             corpora='user'
@@ -230,7 +232,9 @@ class FolderDownload(BaseDownloader):
                 folder_id = self.get_file_id(folder, folderid)
 
             except (HttpError, ValueError, FileNotFoundError, Exception) as e:
+                
                 print(e)
+                raise
                 continue
             folder_name = os.path.join(self.target, folder)
             folder_contents = self.get_folder_content(folder, folder_id)
