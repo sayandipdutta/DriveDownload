@@ -2,5 +2,5 @@ storage.json
 client_secrets.json
 client_secret.json
 client_secret.json:Zone.Identifier
-__pycache__/
 instructions.config
+__pycache__/
