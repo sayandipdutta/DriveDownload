@@ -214,6 +214,7 @@ class FolderDownload(BaseDownloader):
         self.folders = folders
         self.tot_folders = len(folders)
         self.target = target
+        if not os.path.isdir(self.target):os.mkdir(self.target)
         self.nested = nested
 
     #TODO: implement recursion
