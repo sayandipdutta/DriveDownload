@@ -198,7 +198,11 @@ class BaseDownloader:
             
             if not folders:
                 raise ValueError("Empty Folder")
-            folder_id = folders[0]['id']
+            if len(folders) > 1:
+                print(*enumerate(folders, start=1))
+                ix = int(input("Multiple items found, choose one: "))
+            else: ix = 0
+            folder_id = folders[ix]['id']
             return BaseDownloader.get_folder_content(folder_name=None, folder_id=folder_id)
 
     
@@ -275,7 +279,11 @@ class FolderDownload(BaseDownloader):
             fl_downloader = FileDownload(([file['name'] for file in folder_contents], folder_id), folder_name, False)
 
             print(f"Downloading {count}/{self.tot_folders}\nSaving {folder} in {self.target} progress:")
-            fl_downloader.download()
+            try:
+                fl_downloader.download()
+            except ValueError as e:
+                print(e)
+                continue
             print("File saved.")
 
 class Custom(BaseDownloader):
@@ -294,7 +302,11 @@ class Custom(BaseDownloader):
                 if not os.path.isdir(self.target):os.mkdir(self.target)
                 print(f"Downloading films of {query}")
                 fl_downloader = FolderDownload(folders, self.target)
-                fl_downloader.download()
+                try:
+                    fl_downloader.download()
+                except ValueError as e:
+                    print(e)
+                    continue
 
 
 
