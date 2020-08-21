@@ -10,14 +10,19 @@ class FilmDB:
     """
     Searches for film via different queries.
     """
-    __slots__ = {'_filename': 'full path of database file',
-                 '_db': 'Dataframe of film information',
-                 '_file_without_path': 'database filename without path'
+    __slots__ = {
+        '_filename': 'full path of database file',
+        '_db': 'Dataframe of film information',
+        '_file_without_path': 'database filename without path'
     }
 
-    def __init__(self, filename: str):
-        self._filename = os.path.join(BASE_TARGET, filename)
-        self._db = pd.read_csv(self._filename)
+    def __init__(self, filename: str=DATABASE):
+        self._filename = os.path.join(
+            HOME,
+            DATA_DIR, 
+            filename
+            ) if not os.path.isabs(filename) else filename
+        self._db = pd.read_excel(self._filename)
         self._file_without_path = self._filename.rsplit('/')[-1]
 
     @measure_time
@@ -40,15 +45,23 @@ class FilmDB:
         director = kwargs.get('name', None)
         if director:
             self._db = self._db[self._db['Director'].notna()]
-            films = self._db[self._db['Director'
-                            ].str.contains(director
-                            )].sort_values(by='Year'
-                            ).filter(like='Movie Name'
-                            ).values.flatten().tolist()
+            films = (
+                self._db[self._db['Director']
+                .str.contains(director)]
+                .sort_values(by='Year')
+                .filter(like='Movie Name')
+                .values
+                .flatten()
+                .tolist()
+            )
 
             return films
         else:
             raise NotImplementedError
+
+    @classmethod
+    def refresh(cls, filename=['Film List']):
+        FileDownload(filename, BASE_TARGET).download()
 
     def __str__(self):
         return f"databse_name: {self._str}"
@@ -74,11 +87,13 @@ class BaseDownloader:
         Add docstrings
         """
 
-        query = ["mimeType != 'application/vnd.google-apps.folder'",
-                 f"name = '{file_name}'"]
+        query = [
+            "mimeType != 'application/vnd.google-apps.folder'",
+            f"name = '{file_name}'"
+            ]
         query = ' and '.join(query)
         file_name = file_name.replace("'", "\\'")
-        query = f"name = '{file_name}'"
+        query = f"name contains '{file_name}'"
         files = DRIVE.files().list(q=query, 
                                     corpora='user'
                                     ).execute().get('files', [])
@@ -120,10 +135,29 @@ class BaseDownloader:
         downloader = MediaIoBaseDownload(fh, request, chunksize=150 * 1024 * 1024)
         complete = False
         start_time = time.time()
+        plausible_error = (
+            "Only files with binary content can be downloaded. "
+            "Use Export with Google Docs files."
+            )
 
-        while complete is False:
-            status, complete = downloader.next_chunk()
-            print('\r', end= download_info(status, start_time))
+        try:
+            while complete is False:
+                status, complete = downloader.next_chunk()
+                print('\r', end= download_info(status, start_time))
+        except HttpError as e:
+            if plausible_error in str(e):
+                print(
+                    'Probabale Doc/Sheet file. '
+                    'switching to Doc mode.'
+                )
+                request = DRIVE.files().export_media(
+                    fileId=file_id, 
+                    mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                with open(file_name.rsplit('.')[0] + '.xlsx', 'wb') as f:
+                    f.write(request.execute())
+                complete = True
+
         print()
         return complete
 
@@ -151,7 +185,7 @@ class BaseDownloader:
                                         corpora='user'
                                     ).execute().get('files', [])
             if not files:
-                raise ValueError("Empty folder")
+                raise ValueError(f"Empty folder: {folder_name}")
             return files
         else:
             folder_name = folder_name.replace("'", "\\'")
@@ -185,6 +219,7 @@ class FileDownload(BaseDownloader):
     def download(self):
         if not os.path.isdir(self.target):os.mkdir(self.target)
         self.tot_files = len(self.files)
+        print(f"Content:", *self.files, sep='\n')
         for count, file in enumerate(self.files, start=1):
             file_id = self.get_file_id(file, self.parent)
             filename = os.path.join(self.target, file)
@@ -227,14 +262,13 @@ class FolderDownload(BaseDownloader):
             folderid = self.get_file_id(self.folders[0])
             self.folders = [folder['name'] for folder in folder_contents]
         self.tot_folders = len(self.folders)
+        print(f"Content:", *self.folders, sep='\n')
         for count, folder in enumerate(self.folders, start=1):
             try:
                 folder_id = self.get_file_id(folder, folderid)
 
             except (HttpError, ValueError, FileNotFoundError, Exception) as e:
-                
                 print(e)
-                raise
                 continue
             folder_name = os.path.join(self.target, folder)
             folder_contents = self.get_folder_content(folder, folder_id)

@@ -82,9 +82,10 @@ def download_info(status, start_time: float) -> str:
         unit = 'Bps'
 
     ETA = sec_to_hms(remaining / MB_speed)
-    print_string = ' '.join((
-        f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB",
+    print_string = ', '.join((
+        f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB "
+        f"({remaining/total : .2%})",
         f"Remaining: {remaining: .2f} MB",
-        f"ETA: {ETA}, speed: {speed: .3f} {unit}                        "
+        f"ETA: {ETA}, speed: {speed: .3f} {unit}                       "
     ))
     return print_string
