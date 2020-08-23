@@ -1,0 +1,12 @@
+{
+	"SCOPES": "https://www.googleapis.com/auth/drive",
+	"HOME": "/home/sayandip199309/projects_master/DriveDownload",
+	"BASE_TARGET": "/mnt/d/Movies",
+	"CRED_FILES": {
+		"storage_file": "storage.json",
+		"cred_file": "client_secrets.json"
+	},
+	"DATA_DIR": "data",
+  "CONFIG_DIR": "config",
+	"DATABASE": "Film List.xlsx"
+}
