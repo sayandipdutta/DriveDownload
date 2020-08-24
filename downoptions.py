@@ -1,6 +1,8 @@
 from global_config import *
+import shutil
 from googleapiclient.errors import HttpError
 from pathlib import Path
+from os.path import join as pjoin
 import pandas as pd
 from utils import *
 
@@ -17,7 +19,7 @@ class FilmDB:
     }
 
     def __init__(self, filename: str=DATABASE):
-        self._filename = os.path.join(
+        self._filename = pjoin(
             HOME,
             DATA_DIR, 
             filename
@@ -61,6 +63,23 @@ class FilmDB:
 
     @classmethod
     def refresh(cls, filename=['Film List']):
+        """ Refresh the FilmDB.
+        If called without an argument: refreshes the same file from git.
+        If filename is provided. Checks whether it is local, else downloads that filename."""
+        local_candidates = [
+            filename,
+            pjoin(ABSPATH, filename),
+            pjoin(ABSPATH, DATA_DIR, filename),
+            pjoin(ABSPATH, CONFIG_DIR, filename),
+            pjoin(ABSPATH, BASE_TARGET, filename)
+        ]
+        matches = [candidate for candidate in local_candidates
+                   if os.path.isfile(candidate)]
+
+        if matches:
+           shutil.copyfile(mathces[0], pjoin(ABSPATH, DATA_DIR, filename))
+           return None
+
         FileDownload(filename, BASE_TARGET).download()
 
     def __str__(self):
@@ -226,25 +245,25 @@ class FileDownload(BaseDownloader):
         print(f"Content:", *self.files, sep='\n')
         for count, file in enumerate(self.files, start=1):
             file_id = self.get_file_id(file, self.parent)
-            filename = os.path.join(self.target, file)
+            filename = pjoin(self.target, file)
 
             if self.indivdual_folders:
                 fullpath = Path(filename).with_suffix('')
 
                 if not os.path.isdir(fullpath):
                     os.mkdir(fullpath)
-                    filename = os.path.join(fullpath, file)
+                    filename = pjoin(fullpath, file)
             else:
                 fullpath = self.target
             
             if 'success.txt' in os.listdir(fullpath) and \
-                file in open(os.path.join(fullpath, 'success.txt')).read():
+                file in open(pjoin(fullpath, 'success.txt')).read():
                 print(f"{file} already present")
                 continue
             print(f"Downloading {count}/{self.tot_files}\nSaving {file} in {fullpath} progress:")
             complete = self.download_file(file_id, filename)
             if complete:
-                with open(os.path.join(fullpath, 'success.txt'), 'a+') as f:
+                with open(pjoin(fullpath, 'success.txt'), 'a+') as f:
                     f.write(file + '\n')
 
             print("File saved.")
@@ -274,7 +293,7 @@ class FolderDownload(BaseDownloader):
             except (HttpError, ValueError, FileNotFoundError, Exception) as e:
                 print(e)
                 continue
-            folder_name = os.path.join(self.target, folder)
+            folder_name = pjoin(self.target, folder)
             folder_contents = self.get_folder_content(folder, folder_id)
             fl_downloader = FileDownload(([file['name'] for file in folder_contents], folder_id), folder_name, False)
 
@@ -298,7 +317,7 @@ class Custom(BaseDownloader):
         if self.query_type.capitalize() == 'Director':
             for query in self.search:
                 folders = self.filmdb.get_films(by='director', name=query)
-                self.target = os.path.join(self.target, query)
+                self.target = pjoin(self.target, query)
                 if not os.path.isdir(self.target):os.mkdir(self.target)
                 print(f"Downloading films of {query}")
                 fl_downloader = FolderDownload(folders, self.target)
