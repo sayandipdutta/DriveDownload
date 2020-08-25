@@ -15,6 +15,7 @@ class FilmDB:
     __slots__ = {
         '_filename': 'full path of database file',
         '_db': 'Dataframe of film information',
+        'columns': 'Column names of the database',
         '_file_without_path': 'database filename without path'
     }
 
@@ -25,7 +26,20 @@ class FilmDB:
             filename
             ) if not os.path.isabs(filename) else filename
         self._db = pd.read_excel(self._filename)
+        self.columns = [col for col in self._db.columns
+                        if not col.startswith('Unnamed')]
+        self._db = self._db[self.columns]
+        self._db = self._db[self._db[self.columns[0]].notnull()]
         self._file_without_path = self._filename.rsplit('/')[-1]
+
+    def search(self, term, director=False, case=False):
+       """Search films in database."""
+       s = self._db[self.columns[director]]
+       if case == False:
+            s = s.str.casefold()
+            term = term.casefold()
+       return self._db[s.str.contains(term)]
+
 
     @measure_time
     def get_films(self, by: str = 'director', **kwargs):
