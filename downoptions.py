@@ -79,7 +79,8 @@ class FilmDB:
     def refresh(cls, filename=['Film List']):
         """ Refresh the FilmDB.
         If called without an argument: refreshes the same file from git.
-        If filename is provided. Checks whether it is local, else downloads that filename."""
+        If filename is provided. Checks whether it is local,
+        else downloads that filename."""
         local_candidates = [
             filename,
             pjoin(ABSPATH, filename),
@@ -165,7 +166,9 @@ class BaseDownloader:
 
         request = DRIVE.files().get_media(fileId=file_id)
         fh = FileIO(file_name, 'wb')
-        downloader = MediaIoBaseDownload(fh, request, chunksize=150 * 1024 * 1024)
+        downloader = MediaIoBaseDownload(fh,
+                                        request,
+                                        chunksize=150 * 1024 * 1024)
         complete = False
         start_time = time.time()
         plausible_error = (
@@ -183,9 +186,13 @@ class BaseDownloader:
                     'Probabale Doc/Sheet file. '
                     'switching to Doc mode.'
                 )
+                mimeType=('application/'
+                            'vnd.openxmlformats-officedocument'
+                            '.spreadsheetml.sheet'
+                            )
                 request = DRIVE.files().export_media(
                     fileId=file_id, 
-                    mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    mimeType=mimeType
                     )
                 with open(file_name.rsplit('.')[0] + '.xlsx', 'wb') as f:
                     f.write(request.execute())
@@ -222,7 +229,8 @@ class BaseDownloader:
             return files
         else:
             folder_name = folder_name.replace("'", "\\'")
-            query = f"name contains '{folder_name}' and mimeType contains 'folder'"
+            query = (f"name contains '{folder_name}' "
+                      "and mimeType contains 'folder'")
             print(query)
             folders = DRIVE.files().list(
                                             q=query, 
@@ -274,7 +282,8 @@ class FileDownload(BaseDownloader):
                 file in open(pjoin(fullpath, 'success.txt')).read():
                 print(f"{file} already present")
                 continue
-            print(f"Downloading {count}/{self.tot_files}\nSaving {file} in {fullpath} progress:")
+            print(f"Downloading {count}/{self.tot_files}\n"
+                    "Saving {file} in {fullpath} progress:")
             complete = self.download_file(file_id, filename)
             if complete:
                 with open(pjoin(fullpath, 'success.txt'), 'a+') as f:
@@ -309,9 +318,15 @@ class FolderDownload(BaseDownloader):
                 continue
             folder_name = pjoin(self.target, folder)
             folder_contents = self.get_folder_content(folder, folder_id)
-            fl_downloader = FileDownload(([file['name'] for file in folder_contents], folder_id), folder_name, False)
+            fl_downloader = FileDownload(([file['name'] for file 
+                                            in folder_contents], 
+                                          folder_id), 
+                                          folder_name, 
+                                          False
+                                        )
 
-            print(f"Downloading {count}/{self.tot_folders}\nSaving {folder} in {self.target} progress:")
+            print(f"Downloading {count}/{self.tot_folders}\n"
+                    "Saving {folder} in {self.target} progress:")
             try:
                 fl_downloader.download()
             except ValueError as e:
