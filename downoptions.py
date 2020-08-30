@@ -32,8 +32,18 @@ class FilmDB:
         self._db = self._db[self._db[self.columns[0]].notnull()]
         self._file_without_path = self._filename.rsplit('/')[-1]
 
-    def search(self, term, director=False, case=False):
-       """Search films in database."""
+    def search(self, term: str, director: bool=False, case: bool=False) -> pd.Series:
+       """
+       Search films in database.
+       If director==True, get i-th column where i==1
+       if director==False,get i-th column where i==0
+       -----------------------------------------------
+       args      -> term       => str
+                 -> director   => bool (default: False)
+                 -> case       => bool (default: False)
+
+       returns   -> entries that have matching term => pd.Series
+       """
        s = self._db[self.columns[director]]
        if case == False:
             s = s.str.casefold()
@@ -111,14 +121,11 @@ class BaseDownloader:
         self.target = None
         self.special = None
         self.tot_folders = None
+        self.last_updated_file = None
 
     def download(self):
-        pass
-
-    @staticmethod
-    def get_file_id(file_name: str, parent=None) -> str:
         """
-        Add docstrings
+        Base download method.
         """
 
         query = [
@@ -151,6 +158,36 @@ class BaseDownloader:
             return files[0]['id']
 
     @staticmethod
+    def write_success(fullpath: str, filename: str): -> None:
+        '''
+        Write filename at fullpath in 'success.txt'.
+        '''
+        with open(pjoin(fullpath, 'success.txt'), 'a+') as f:
+            f.write(filename + '\n')
+
+
+    @staticmethod
+    def check_success(path: str, file_name: str) -> bool:
+        '''
+        Check if success.txt exists in path, and file_name 
+        exists in success.txt, if both True return True, 
+        else False
+        ----------------------------------------------------
+        args      -> path      => str,
+                  -> file_name => str
+
+        returns   -> success   => bool
+
+        ----------------------------------------------------
+        '''
+        if 'success.txt' in os.listdir(path):
+            return file_name in open(
+                    pjoin(path, 'success.txt')
+                    ).read()
+        return False
+
+
+    @staticmethod
     def download_file(file_id: str, file_name: str) -> bool:
         '''
         Download files given file_id and save it in filename
@@ -158,13 +195,14 @@ class BaseDownloader:
         args      -> file_id   => str,
                   -> file_name => str
         
-        returns   -> success   => bool
+        returns   -> complete  => bool
 
         ------------------------------------------------------
         complete==True if file download successful else False
         '''
 
         request = DRIVE.files().get_media(fileId=file_id)
+        self.last_updated_path = filename
         fh = FileIO(file_name, 'wb')
         downloader = MediaIoBaseDownload(fh,
                                         request,
@@ -277,19 +315,19 @@ class FileDownload(BaseDownloader):
                     filename = pjoin(fullpath, file)
             else:
                 fullpath = self.target
-            
-            if 'success.txt' in os.listdir(fullpath) and \
-                file in open(pjoin(fullpath, 'success.txt')).read():
+           
+            if self.check_success(fullpath, file):
                 print(f"{file} already present")
                 continue
+
             print(f"Downloading {count}/{self.tot_files}\n"
                     "Saving {file} in {fullpath} progress:")
             complete = self.download_file(file_id, filename)
             if complete:
-                with open(pjoin(fullpath, 'success.txt'), 'a+') as f:
-                    f.write(file + '\n')
+                self.write_success(fullpath, file)
 
             print("File saved.")
+
 
 class FolderDownload(BaseDownloader):
     def __init__(self, folders, target, nested=False):
