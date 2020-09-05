@@ -123,11 +123,42 @@ class BaseDownloader:
         self.tot_folders = None
         self.last_updated_file = None
 
+    @staticmethod
+    def get_file_id(file_name: str, parent=None) -> str:
+        """
+        Add docstrings
+        """
+        query = ["mimeType != 'application/vnd.google-apps.folder'",
+                  f"name = '{file_name}'"]
+        query = ' and '.join(query)
+        file_name = file_name.replace("'", "\\'")
+        query = f"name = '{file_name}'"
+        files = DRIVE.files().list(q=query,
+                                    corpora='user'
+                                    ).execute().get('files', [])
+        if not files:
+            raise FileNotFoundError(2, "No such file or directory", file_name)
+        elif len(files) > 1:
+            if not parent:
+                return files[0]['id']
+                raise ValueError("More than one value found", files)
+            else:
+                file_name = parent.replace("'", "\\'")
+                query += f' and "{parent}" in parents'
+                files = DRIVE.files().list(q=query,
+                                            corpora='user'
+                                            ).execute().get('files', [])
+                if len(files) > 1:
+                    raise ValueError("More than one value found", files)
+                else:
+                    return files[0]['id']
+        else:
+            return files[0]['id']
+
     def download(self):
         """
         Base download method.
         """
-
         query = [
             "mimeType != 'application/vnd.google-apps.folder'",
             f"name = '{file_name}'"
@@ -158,7 +189,7 @@ class BaseDownloader:
             return files[0]['id']
 
     @staticmethod
-    def write_success(fullpath: str, filename: str): -> None:
+    def write_success(fullpath: str, filename: str) -> None:
         '''
         Write filename at fullpath in 'success.txt'.
         '''
@@ -364,7 +395,7 @@ class FolderDownload(BaseDownloader):
                                         )
 
             print(f"Downloading {count}/{self.tot_folders}\n"
-                    "Saving {folder} in {self.target} progress:")
+                  f"Saving {folder} in {self.target} progress:")
             try:
                 fl_downloader.download()
             except ValueError as e:
