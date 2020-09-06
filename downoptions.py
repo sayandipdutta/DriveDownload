@@ -121,7 +121,7 @@ class BaseDownloader:
         self.target = None
         self.special = None
         self.tot_folders = None
-        self.last_updated_file = None
+ #       self.last_updated_file = None
 
     @staticmethod
     def get_file_id(file_name: str, parent=None) -> str:
@@ -233,7 +233,7 @@ class BaseDownloader:
         '''
 
         request = DRIVE.files().get_media(fileId=file_id)
-        self.last_updated_path = filename
+#        self.last_updated_path = file_name
         fh = FileIO(file_name, 'wb')
         downloader = MediaIoBaseDownload(fh,
                                         request,
@@ -287,7 +287,6 @@ class BaseDownloader:
         itself with id, and then generates list of files/folders
         in the given folder_name.
         '''
-        # breakpoint()
         if folder_id:
             files = DRIVE.files().list(
                                         q=f"'{folder_id}' in parents",
@@ -352,7 +351,7 @@ class FileDownload(BaseDownloader):
                 continue
 
             print(f"Downloading {count}/{self.tot_files}\n"
-                    "Saving {file} in {fullpath} progress:")
+                    f"Saving {file} in {fullpath} progress:")
             complete = self.download_file(file_id, filename)
             if complete:
                 self.write_success(fullpath, file)
