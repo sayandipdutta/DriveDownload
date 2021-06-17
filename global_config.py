@@ -38,11 +38,18 @@ CONFIG_DIR = 'config'
 CONFIG = ABSPATH / CONFIG_DIR / args.config
 SETTING = ABSPATH / CONFIG_DIR / args.setting
 
+class Instruction(NamedTuple):
+    method: str
+    args: list[str]
+    target: pathlib.Path
+    special: Any
+
+
 def __instructions(
     class_type: str, 
     args: str, 
     target: PathLike, 
-    special: str) -> NamedTuple:#[str, list[str], pathlib.Path, Any]:
+    special: str) -> Instruction:
     """Create instruction sets.
 
     Args:
@@ -58,7 +65,7 @@ def __instructions(
         namedtuple[str, list[str], pathlib.Path, Any]: Args for class.
     """
 
-    instruction = namedtuple('instruction', 'method args target special')
+    
     if target == '.':
         target = BASE_TARGET
     elif not os.path.isdir(target):
@@ -72,7 +79,7 @@ def __instructions(
     if class_type != 'Custom':
         special = literal_eval(special)
 
-    return instruction(class_type, args, target, special)
+    return Instruction(class_type, args, target, special)
 
 with chdir(ABSPATH):
     
