@@ -1,11 +1,18 @@
+import contextlib
+import os
 import datetime, time
-from typing import Callable
+from typing import Callable, TypeVar, Any, Iterator
 from functools import wraps
+import pathlib
+import contextlib
+from googleapiclient.http import MediaIoBaseDownload
 
 # __all__ = ['measure_time', 'bytes_to_MB', 'sec_to_hms', 'download_info']
 
+T = TypeVar("T", bound=Callable[..., Any])
+PathLike = TypeVar("PathLike", str, pathlib.Path, None)
 
-def measure_time(func: Callable) -> Callable:
+def measure_time(func: Callable[[T], T]) -> Callable[[T], T]:
     """
     Measure time taken by the Callable.
     -----------------------------------------------------
@@ -17,7 +24,7 @@ def measure_time(func: Callable) -> Callable:
     Decorator to measure time.
     """
     @wraps(func)
-    def caller(*args, **kwargs):
+    def caller(*args: T, **kwargs: T) -> T:
         s_time = time.time()
         result = func(*args, **kwargs)
         t_taken = (time.time() - s_time)
@@ -53,7 +60,7 @@ def sec_to_hms(sec: float) -> str:
 
     return str(datetime.timedelta(seconds=int(sec)))
 
-def download_info(status, start_time: float) -> str:
+def download_info(status: MediaIoBaseDownload, start_time: float) -> str:
     """
     Given status object and a start_time returns current 
     status of the download.
@@ -82,9 +89,29 @@ def download_info(status, start_time: float) -> str:
         unit = 'Bps'
 
     ETA = sec_to_hms(remaining / MB_speed)
-    print_string = ' '.join((
-        f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB",
+    print_string = ', '.join((
+        f" Downloaded: {(total - remaining): .2f} MB / {total: .2f} MB "
+        f"({(total - remaining)/total : .2%})",
         f"Remaining: {remaining: .2f} MB",
-        f"ETA: {ETA}, speed: {speed: .3f} {unit}                        "
+        f"ETA: {ETA}, speed: {speed: .3f} {unit}                       "
     ))
     return print_string
+
+@contextlib.contextmanager
+def chdir(path: PathLike) -> Iterator[None]:
+    """A context manager which changes the working directory to the given
+    path, and then changes it back to its previous value on exit.
+
+    Args:
+        path (PathLike): The Path to change to.
+
+    Yields:
+        Iterator[None]: None.
+    """
+
+    prev_cwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)

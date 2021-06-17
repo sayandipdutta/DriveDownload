@@ -19,3 +19,10 @@ __status__ = "Development"
 #===========================================================================#
 #===========================================================================#
 
+import subprocess
+import os
+from pathlib import Path
+
+if not Path('storage.json').is_file():
+    cmd = ['python authorize.py --noauth_local_webserver']
+    subprocess.run(cmd, check=True, shell=True)
