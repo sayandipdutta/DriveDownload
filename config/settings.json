@@ -1,6 +1,6 @@
 {
 	"SCOPES": "https://www.googleapis.com/auth/drive",
-	"HOME": "/home/sayandip199309/projects_master/DriveDownload",
+	"HOME": "/home/sayandip199309/python/drive/DriveDownload",
 	"BASE_TARGET": "/mnt/d/Movies",
 	"CRED_FILES": {
 		"storage_file": "storage.json",
