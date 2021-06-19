@@ -4,7 +4,6 @@ Run to authorize the program to access Drive. One-time.
 Usage: python authorize.py --noauth_local_webserver
 """
 
-from utils import *
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
 from httplib2 import Http

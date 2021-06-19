@@ -22,7 +22,8 @@ __status__ = "Development"
 import subprocess
 import os
 from pathlib import Path
+parent_cwd = Path.cwd().parent.absolute()
 
-if not Path('storage.json').is_file():
-    cmd = ['python authorize.py --noauth_local_webserver']
+if not (cwd / 'config' / 'storage.json').is_file():
+    cmd = 'python authorize.py --noauth_local_webserver'
     subprocess.run(cmd, check=True, shell=True)

@@ -50,6 +50,7 @@ class FilmDB:
 
        returns   -> entries that have matching term => pd.Series
        """
+
        s = self._db[self.columns[director]]
        if case == False:
             s = s.str.casefold()
@@ -71,19 +72,19 @@ class FilmDB:
         provided by=='director' and name==<some_name>,
         return list of films by that director from the db.
         """
-        if by != 'director':
-            raise NotImplementedError
 
-        director = kwargs.get('name', None)
+        if not by == 'director':
+            raise NotImplementedError(
+                    "Only 'director' is supported argument for keyword 'by'"
+                )
+
+        director = kwargs.get('name').lower()
         if director:
             self._db = self._db[self._db['Director'].notna()]
             films = (
                 self._db[self._db['Director']
                 .str.contains(director)]
-                .sort_values(by='Year')
-                .filter(like='Movie Name')
-                .values
-                .flatten()
+                .sort_values(by='Year')['Movie Name (Year)']
                 .tolist()
             )
 
@@ -97,8 +98,9 @@ class FilmDB:
         If called without an argument: refreshes the same file from git.
         If filename is provided. Checks whether it is local,
         else downloads that filename."""
+
         if local:
-            filename = filename[0]
+            filename, = filename
             local_candidates = [
                 filename,
                 ABSPATH / filename,
@@ -106,20 +108,20 @@ class FilmDB:
                 ABSPATH / CONFIG_DIR / filename,
                 ABSPATH / BASE_TARGET / filename
             ]
-            matches = [candidate for candidate in local_candidates
-                       if candidate.is_file()]
+            match = next(candidate for candidate in local_candidates
+                       if candidate.is_file())
 
-            if matches:
-               shutil.copyfile(mathces[0], ABSPATH / DATA_DIR / filename)
-               return None
+            if match:
+               shutil.copyfile(match, ABSPATH / DATA_DIR / filename)
+
         else:
             FileDownload(filename, BASE_TARGET).download()
 
     def __str__(self):
-        return f"databse_name: {self._str}"
+        return f"databse_name: {self._file_without_path}"
 
     def __repr__(self):
-        return f"<FilmDB object of file {self._str}>"
+        return f"<FilmDB object of file {self._file_without_path}>"
 
 
 class BaseDownloader:
@@ -172,7 +174,7 @@ class BaseDownloader:
             f"name = '{file_name}'"
             ]
         query = ' and '.join(query)
-        file_name = file_name.replace("'", "\\'")
+        file_name = file_name.replace("'", "\\'").replace("\\", r'\\')
         query = f"name contains '{file_name}'"
         files = DRIVE.files().list(q=query, 
                                     corpora='user'
