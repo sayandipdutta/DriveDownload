@@ -83,10 +83,10 @@ def __instructions(
 
 with chdir(ABSPATH):
     
-    with ( 
-        open(SETTING, 'r+') as setting_file, 
-        open(CONFIG) as configs
-    ):
+    with \
+        open(SETTING, 'r+') as setting_file, \
+        open(CONFIG) as configs \
+    :
         settings = json.load(setting_file)
         # globals.update(settings)
         if not (ABSPATH / CONFIG_DIR / 'storage.json').is_file():

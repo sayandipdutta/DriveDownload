@@ -338,7 +338,7 @@ class BaseDownloader:
                 raise ValueError("Empty Folder")
             if len(folders) > 1:
                 print(*enumerate(folders, start=1))
-                ix = int(input("Multiple items found, choose one: "))
+                ix = int(input("Multiple items found, choose one: "), sep='\n')
             else: ix = 0
             folder_id = folders[ix]['id']
             return BaseDownloader.get_folder_content(folder_name=None, folder_id=folder_id)
